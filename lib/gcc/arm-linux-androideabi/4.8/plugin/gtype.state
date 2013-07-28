@@ -4,7 +4,7 @@
 ;;; Don't parse this file wihout knowing GCC gengtype internals.
 ;;; This file should be parsed by the same gengtype which wrote it.
 
-(!version  "4.8 20130710 (prerelease)")
+(!version  "4.8 20130727 (prerelease)")
 
 (!srcdir  "../.././../gcc/gcc-4.8/gcc")
 
@@ -1732,28 +1732,28 @@ nil )
 nil )
 (!pair  "deferred_access_check"
 (!type struct 73 nil  gc_used "deferred_access_check"
-(!srcfileloc  "cp/cp-tree.h" 5581)
+(!srcfileloc  "cp/cp-tree.h" 5582)
 
 (!fields 4 
 (!pair  "binfo"
 (!type already_seen 5)
 
-(!srcfileloc  "cp/cp-tree.h" 5574)
+(!srcfileloc  "cp/cp-tree.h" 5575)
 nil )
 (!pair  "decl"
 (!type already_seen 5)
 
-(!srcfileloc  "cp/cp-tree.h" 5576)
+(!srcfileloc  "cp/cp-tree.h" 5577)
 nil )
 (!pair  "diag_decl"
 (!type already_seen 5)
 
-(!srcfileloc  "cp/cp-tree.h" 5578)
+(!srcfileloc  "cp/cp-tree.h" 5579)
 nil )
 (!pair  "loc"
 (!type already_seen 9)
 
-(!srcfileloc  "cp/cp-tree.h" 5580)
+(!srcfileloc  "cp/cp-tree.h" 5581)
 nil ))
 nil 260 nil )
 
@@ -21288,7 +21288,7 @@ nil 0 nil )
 (!fields 0 )
 nil 0 nil )
 
-(!type struct 992 nil  gc_unused "anonymous:../.././../gcc/gcc-4.8/gcc/config/arm/arm.c:25890"nil 
+(!type struct 992 nil  gc_unused "anonymous:../.././../gcc/gcc-4.8/gcc/config/arm/arm.c:25899"nil 
 (!fields 0 )
 nil 0 nil )
 
@@ -21296,7 +21296,7 @@ nil 0 nil )
 (!fields 0 )
 nil 0 nil )
 
-(!type struct 994 nil  gc_unused "anonymous:../.././../gcc/gcc-4.8/gcc/config/arm/arm.c:19438"nil 
+(!type struct 994 nil  gc_unused "anonymous:../.././../gcc/gcc-4.8/gcc/config/arm/arm.c:19447"nil 
 (!fields 0 )
 nil 0 nil )
 
@@ -25752,7 +25752,7 @@ nil )
 (!pair  "deferred_access_check"
 (!type already_seen 73)
 
-(!srcfileloc  "cp/cp-tree.h" 5581)
+(!srcfileloc  "cp/cp-tree.h" 5582)
 nil )
 (!pair  "walk_namespaces_fn"
 (!type already_seen 9)
@@ -26472,27 +26472,27 @@ nil )
 (!pair  "arm_mangle_map_entry"
 (!type already_seen 992)
 
-(!srcfileloc  "config/arm/arm.c" 25894)
+(!srcfileloc  "config/arm/arm.c" 25903)
 nil )
 (!pair  "builtin_arg"
 (!type already_seen 9)
 
-(!srcfileloc  "config/arm/arm.c" 21174)
+(!srcfileloc  "config/arm/arm.c" 21183)
 nil )
 (!pair  "neon_builtin_datum"
 (!type already_seen 994)
 
-(!srcfileloc  "config/arm/arm.c" 19444)
+(!srcfileloc  "config/arm/arm.c" 19453)
 nil )
 (!pair  "neon_itype"
 (!type already_seen 9)
 
-(!srcfileloc  "config/arm/arm.c" 19436)
+(!srcfileloc  "config/arm/arm.c" 19445)
 nil )
 (!pair  "neon_builtin_type_mode"
 (!type already_seen 9)
 
-(!srcfileloc  "config/arm/arm.c" 19370)
+(!srcfileloc  "config/arm/arm.c" 19379)
 nil )
 (!pair  "arm_pragma_enum"
 (!type already_seen 9)
@@ -29558,7 +29558,7 @@ nil )
 (!pair  "the_parser"
 (!type already_seen 691)
 
-(!srcfileloc  "cp/parser.c" 28131)
+(!srcfileloc  "cp/parser.c" 28132)
 nil )
 (!pair  "lambda_scope_stack"
 (!type already_seen 686)
@@ -29769,7 +29769,7 @@ nil )
 (!pair  "unemitted_tinfo_decls"
 (!type already_seen 45)
 
-(!srcfileloc  "cp/cp-tree.h" 5514)
+(!srcfileloc  "cp/cp-tree.h" 5515)
 nil )
 (!pair  "deferred_mark_used_calls"
 (!type already_seen 45)
@@ -30397,7 +30397,7 @@ nil )
 (!type already_seen 5)
 )
 
-(!srcfileloc  "config/arm/arm.c" 19948)
+(!srcfileloc  "config/arm/arm.c" 19957)
 nil )
 (!pair  "tls_get_addr_libfunc"
 (!type already_seen 136)
