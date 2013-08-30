@@ -58,7 +58,7 @@ Introduction
 
 This manual documents how to use the GNU compilers, as well as their
 features and incompatibilities, and how to report bugs.  It corresponds
-to the compilers (PizzaChain 20130727) version 4.8.  The internals of
+to the compilers (PizzaChain 20130830) version 4.8.  The internals of
 the GNU compilers, including how to port them to new targets and some
 information about how to write front ends for new languages, are
 documented in a separate manual.  *Note Introduction: (gccint)Top.
@@ -30149,6 +30149,7 @@ instructions, but allow the compiler to schedule those calls.
 * PowerPC Built-in Functions::
 * PowerPC AltiVec/VSX Built-in Functions::
 * RX Built-in Functions::
+* S/390 System z Built-in Functions::
 * SH Built-in Functions::
 * SPARC VIS Built-in Functions::
 * SPU Built-in Functions::
@@ -40762,7 +40763,7 @@ always generate the VSX `LXVD2X', `LXVW4X', `STXVD2X', and `STXVW4X'
 instructions.
 
 
-File: gcc.info,  Node: RX Built-in Functions,  Next: SH Built-in Functions,  Prev: PowerPC AltiVec/VSX Built-in Functions,  Up: Target Builtins
+File: gcc.info,  Node: RX Built-in Functions,  Next: S/390 System z Built-in Functions,  Prev: PowerPC AltiVec/VSX Built-in Functions,  Up: Target Builtins
 
 6.56.16 RX Built-in Functions
 -----------------------------
@@ -40860,9 +40861,117 @@ following functions are supported:
      Generates the `wait' machine instruction.
 
 
-File: gcc.info,  Node: SH Built-in Functions,  Next: SPARC VIS Built-in Functions,  Prev: RX Built-in Functions,  Up: Target Builtins
+File: gcc.info,  Node: S/390 System z Built-in Functions,  Next: SH Built-in Functions,  Prev: RX Built-in Functions,  Up: Target Builtins
 
-6.56.17 SH Built-in Functions
+6.56.17 S/390 System z Built-in Functions
+-----------------------------------------
+
+ -- Built-in Function: int __builtin_tbegin (void*)
+     Generates the `tbegin' machine instruction starting a
+     non-constraint hardware transaction.  If the parameter is non-NULL
+     the memory area is used to store the transaction diagnostic buffer
+     and will be passed as first operand to `tbegin'.  This buffer can
+     be defined using the `struct __htm_tdb' C struct defined in
+     `htmintrin.h' and must reside on a double-word boundary.  The
+     second tbegin operand is set to `0xff0c'. This enables
+     save/restore of all GPRs and disables aborts for FPR and AR
+     manipulations inside the transaction body.  The condition code set
+     by the tbegin instruction is returned as integer value.  The tbegin
+     instruction by definition overwrites the content of all FPRs.  The
+     compiler will generate code which saves and restores the FPRs.  For
+     soft-float code it is recommended to used the `*_nofloat' variant.
+     In order to prevent a TDB from being written it is required to
+     pass an constant zero value as parameter.  Passing the zero value
+     through a variable is not sufficient.  Although modifications of
+     access registers inside the transaction will not trigger an
+     transaction abort it is not supported to actually modify them.
+     Access registers do not get saved when entering a transaction.
+     They will have undefined state when reaching the abort code.
+
+ Macros for the possible return codes of tbegin are defined in the
+`htmintrin.h' header file:
+
+`_HTM_TBEGIN_STARTED'
+     `tbegin' has been executed as part of normal processing.  The
+     transaction body is supposed to be executed.
+
+`_HTM_TBEGIN_INDETERMINATE'
+     The transaction was aborted due to an indeterminate condition which
+     might be persistent.
+
+`_HTM_TBEGIN_TRANSIENT'
+     The transaction aborted due to a transient failure.  The
+     transaction should be re-executed in that case.
+
+`_HTM_TBEGIN_PERSISTENT'
+     The transaction aborted due to a persistent failure.  Re-execution
+     under same circumstances will not be productive.
+
+ -- Macro: _HTM_FIRST_USER_ABORT_CODE
+     The `_HTM_FIRST_USER_ABORT_CODE' defined in `htmintrin.h'
+     specifies the first abort code which can be used for
+     `__builtin_tabort'.  Values below this threshold are reserved for
+     machine use.
+
+ -- Data type: struct __htm_tdb
+     The `struct __htm_tdb' defined in `htmintrin.h' describes the
+     structure of the transaction diagnostic block as specified in the
+     Principles of Operation manual chapter 5-91.
+
+ -- Built-in Function: int __builtin_tbegin_nofloat (void*)
+     Same as `__builtin_tbegin' but without FPR saves and restores.
+     Using this variant in code making use of FPRs will leave the FPRs
+     in undefined state when entering the transaction abort handler
+     code.
+
+ -- Built-in Function: int __builtin_tbegin_retry (void*, int)
+     In addition to `__builtin_tbegin' a loop for transient failures is
+     generated.  If tbegin returns a condition code of 2 the transaction
+     will be retried as often as specified in the second argument.  The
+     perform processor assist instruction is used to tell the CPU about
+     the number of fails so far.
+
+ -- Built-in Function: int __builtin_tbegin_retry_nofloat (void*, int)
+     Same as `__builtin_tbegin_retry' but without FPR saves and
+     restores.  Using this variant in code making use of FPRs will leave
+     the FPRs in undefined state when entering the transaction abort
+     handler code.
+
+ -- Built-in Function: void __builtin_tbeginc (void)
+     Generates the `tbeginc' machine instruction starting a constraint
+     hardware transaction.  The second operand is set to `0xff08'.
+
+ -- Built-in Function: int __builtin_tend (void)
+     Generates the `tend' machine instruction finishing a transaction
+     and making the changes visible to other threads.  The condition
+     code generated by tend is returned as integer value.
+
+ -- Built-in Function: void __builtin_tabort (int)
+     Generates the `tabort' machine instruction with the specified
+     abort code.  Abort codes from 0 through 255 are reserved and will
+     result in an error message.
+
+ -- Built-in Function: void __builtin_tx_assist (int)
+     Generates the `ppa rX,rY,1' machine instruction.  Where the
+     integer parameter is loaded into rX and a value of zero is loaded
+     into rY.  The integer parameter specifies the number of times the
+     transaction repeatedly aborted.
+
+ -- Built-in Function: int __builtin_tx_nesting_depth (void)
+     Generates the `etnd' machine instruction.  The current nesting
+     depth is returned as integer value.  For a nesting depth of 0 the
+     code is not executed as part of an transaction.
+
+ -- Built-in Function: void __builtin_non_tx_store (unsigned long long
+          *, unsigned long long)
+     Generates the `ntstg' machine instruction.  The second argument is
+     written to the first arguments location.  The store operation will
+     not be rolled-back in case of an transaction abort.
+
+
+File: gcc.info,  Node: SH Built-in Functions,  Next: SPARC VIS Built-in Functions,  Prev: S/390 System z Built-in Functions,  Up: Target Builtins
+
+6.56.18 SH Built-in Functions
 -----------------------------
 
 The following built-in functions are supported on the SH1, SH2, SH3 and
@@ -40897,7 +41006,7 @@ SH4 families of processors:
 
 File: gcc.info,  Node: SPARC VIS Built-in Functions,  Next: SPU Built-in Functions,  Prev: SH Built-in Functions,  Up: Target Builtins
 
-6.56.18 SPARC VIS Built-in Functions
+6.56.19 SPARC VIS Built-in Functions
 ------------------------------------
 
 GCC supports SIMD operations on the SPARC using both the generic vector
@@ -41038,7 +41147,7 @@ functions also become available:
 
 File: gcc.info,  Node: SPU Built-in Functions,  Next: TI C6X Built-in Functions,  Prev: SPARC VIS Built-in Functions,  Up: Target Builtins
 
-6.56.19 SPU Built-in Functions
+6.56.20 SPU Built-in Functions
 ------------------------------
 
 GCC provides extensions for the SPU processor as described in the
@@ -41084,7 +41193,7 @@ are subject to change without notice.
 
 File: gcc.info,  Node: TI C6X Built-in Functions,  Next: TILE-Gx Built-in Functions,  Prev: SPU Built-in Functions,  Up: Target Builtins
 
-6.56.20 TI C6X Built-in Functions
+6.56.21 TI C6X Built-in Functions
 ---------------------------------
 
 GCC provides intrinsics to access certain instructions of the TI C6X
@@ -41123,7 +41232,7 @@ C6X instructions.
 
 File: gcc.info,  Node: TILE-Gx Built-in Functions,  Next: TILEPro Built-in Functions,  Prev: TI C6X Built-in Functions,  Up: Target Builtins
 
-6.56.21 TILE-Gx Built-in Functions
+6.56.22 TILE-Gx Built-in Functions
 ----------------------------------
 
 GCC provides intrinsics to access every instruction of the TILE-Gx
@@ -41155,7 +41264,7 @@ after it.
 
 File: gcc.info,  Node: TILEPro Built-in Functions,  Prev: TILE-Gx Built-in Functions,  Up: Target Builtins
 
-6.56.22 TILEPro Built-in Functions
+6.56.23 TILEPro Built-in Functions
 ----------------------------------
 
 GCC provides intrinsics to access every instruction of the TILEPro
@@ -51160,6 +51269,8 @@ Keyword Index
 * __builtin_nans:                        Other Builtins.     (line  509)
 * __builtin_nansf:                       Other Builtins.     (line  513)
 * __builtin_nansl:                       Other Builtins.     (line  516)
+* __builtin_non_tx_store:                S/390 System z Built-in Functions.
+                                                             (line  104)
 * __builtin_object_size:                 Object Size Checking.
                                                              (line    6)
 * __builtin_offsetof:                    Offsetof.           (line    6)
@@ -51219,9 +51330,27 @@ Keyword Index
                                                              (line   96)
 * __builtin_set_thread_pointer:          SH Built-in Functions.
                                                              (line   10)
+* __builtin_tabort:                      S/390 System z Built-in Functions.
+                                                             (line   87)
+* __builtin_tbegin:                      S/390 System z Built-in Functions.
+                                                             (line    7)
+* __builtin_tbegin_nofloat:              S/390 System z Built-in Functions.
+                                                             (line   59)
+* __builtin_tbegin_retry:                S/390 System z Built-in Functions.
+                                                             (line   65)
+* __builtin_tbegin_retry_nofloat:        S/390 System z Built-in Functions.
+                                                             (line   72)
+* __builtin_tbeginc:                     S/390 System z Built-in Functions.
+                                                             (line   78)
+* __builtin_tend:                        S/390 System z Built-in Functions.
+                                                             (line   82)
 * __builtin_thread_pointer:              SH Built-in Functions.
                                                              (line   20)
 * __builtin_trap:                        Other Builtins.     (line  281)
+* __builtin_tx_assist:                   S/390 System z Built-in Functions.
+                                                             (line   92)
+* __builtin_tx_nesting_depth:            S/390 System z Built-in Functions.
+                                                             (line   98)
 * __builtin_types_compatible_p:          Other Builtins.     (line  111)
 * __builtin_unreachable:                 Other Builtins.     (line  288)
 * __builtin_va_arg_pack:                 Constructing Calls. (line   53)
@@ -51288,6 +51417,8 @@ Keyword Index
 * _exit:                                 Other Builtins.     (line    6)
 * _Exit:                                 Other Builtins.     (line    6)
 * _Fract data type:                      Fixed-Point.        (line    6)
+* _HTM_FIRST_USER_ABORT_CODE:            S/390 System z Built-in Functions.
+                                                             (line   48)
 * _Sat data type:                        Fixed-Point.        (line    6)
 * _xabort:                               X86 transactional memory intrinsics.
                                                              (line   68)
@@ -52437,6 +52568,8 @@ Keyword Index
 * strspn:                                Other Builtins.     (line    6)
 * strstr:                                Other Builtins.     (line    6)
 * struct:                                Unnamed Fields.     (line    6)
+* struct __htm_tdb:                      S/390 System z Built-in Functions.
+                                                             (line   54)
 * structures:                            Incompatibilities.  (line  146)
 * structures, constructor expression:    Compound Literals.  (line    6)
 * submodel options:                      Submodel Options.   (line    6)
@@ -52910,129 +53043,130 @@ Node: x86 specific memory model extensions for transactional memory1201731
 Node: Object Size Checking1202968
 Node: Other Builtins1208457
 Node: Target Builtins1237601
-Node: Alpha Built-in Functions1238741
-Node: ARM iWMMXt Built-in Functions1241750
-Node: ARM NEON Intrinsics1248730
-Node: AVR Built-in Functions1457149
-Node: Blackfin Built-in Functions1460219
-Node: FR-V Built-in Functions1460836
-Node: Argument Types1461695
-Node: Directly-mapped Integer Functions1463447
-Node: Directly-mapped Media Functions1464529
-Node: Raw read/write Functions1471561
-Node: Other Built-in Functions1472473
-Node: X86 Built-in Functions1473657
-Node: X86 transactional memory intrinsics1532625
-Node: MIPS DSP Built-in Functions1535299
-Node: MIPS Paired-Single Support1547807
-Node: MIPS Loongson Built-in Functions1549306
-Node: Paired-Single Arithmetic1555826
-Node: Paired-Single Built-in Functions1556774
-Node: MIPS-3D Built-in Functions1559441
-Node: Other MIPS Built-in Functions1564818
-Node: picoChip Built-in Functions1565342
-Node: PowerPC Built-in Functions1566691
-Node: PowerPC AltiVec/VSX Built-in Functions1568105
-Node: RX Built-in Functions1678092
-Node: SH Built-in Functions1682095
-Node: SPARC VIS Built-in Functions1683476
-Node: SPU Built-in Functions1689080
-Node: TI C6X Built-in Functions1690896
-Node: TILE-Gx Built-in Functions1691920
-Node: TILEPro Built-in Functions1693037
-Node: Target Format Checks1694104
-Node: Solaris Format Checks1694536
-Node: Darwin Format Checks1694962
-Node: Pragmas1695780
-Node: ARM Pragmas1696490
-Node: M32C Pragmas1697093
-Node: MeP Pragmas1698167
-Node: RS/6000 and PowerPC Pragmas1700236
-Node: Darwin Pragmas1700977
-Node: Solaris Pragmas1702044
-Node: Symbol-Renaming Pragmas1703205
-Node: Structure-Packing Pragmas1704759
-Node: Weak Pragmas1706409
-Node: Diagnostic Pragmas1707143
-Node: Visibility Pragmas1710250
-Node: Push/Pop Macro Pragmas1711002
-Node: Function Specific Option Pragmas1711974
-Node: Unnamed Fields1714231
-Node: Thread-Local1716459
-Node: C99 Thread-Local Edits1718564
-Node: C++98 Thread-Local Edits1720576
-Node: Binary constants1724020
-Node: C++ Extensions1724691
-Node: C++ Volatiles1726402
-Node: Restricted Pointers1728750
-Node: Vague Linkage1730341
-Node: C++ Interface1733965
-Ref: C++ Interface-Footnote-11738251
-Node: Template Instantiation1738387
-Node: Bound member functions1744974
-Node: C++ Attributes1746506
-Node: Function Multiversioning1749162
-Node: Namespace Association1750977
-Node: Type Traits1752357
-Node: Java Exceptions1758845
-Node: Deprecated Features1760235
-Node: Backwards Compatibility1763200
-Node: Objective-C1764552
-Node: GNU Objective-C runtime API1765161
-Node: Modern GNU Objective-C runtime API1766168
-Node: Traditional GNU Objective-C runtime API1768605
-Node: Executing code before main1769333
-Node: What you can and what you cannot do in +load1772071
-Node: Type encoding1774461
-Node: Legacy type encoding1779537
-Node: @encode1780628
-Node: Method signatures1781169
-Node: Garbage Collection1783164
-Node: Constant string objects1785853
-Node: compatibility_alias1788361
-Node: Exceptions1789083
-Node: Synchronization1791794
-Node: Fast enumeration1792978
-Node: Using fast enumeration1793290
-Node: c99-like fast enumeration syntax1794501
-Node: Fast enumeration details1795204
-Node: Fast enumeration protocol1797545
-Node: Messaging with the GNU Objective-C runtime1800697
-Node: Dynamically registering methods1802068
-Node: Forwarding hook1803759
-Node: Compatibility1806799
-Node: Gcov1813366
-Node: Gcov Intro1813899
-Node: Invoking Gcov1816617
-Node: Gcov and Optimization1829528
-Node: Gcov Data Files1832528
-Node: Cross-profiling1833923
-Node: Trouble1835774
-Node: Actual Bugs1837186
-Node: Interoperation1837633
-Node: Incompatibilities1844525
-Node: Fixed Headers1852676
-Node: Standard Libraries1854339
-Node: Disappointments1855711
-Node: C++ Misunderstandings1860069
-Node: Static Definitions1860880
-Node: Name lookup1861933
-Ref: Name lookup-Footnote-11866711
-Node: Temporaries1866898
-Node: Copy Assignment1868874
-Node: Non-bugs1870681
-Node: Warnings and Errors1881188
-Node: Bugs1882950
-Node: Bug Criteria1883514
-Node: Bug Reporting1885724
-Node: Service1885945
-Node: Contributing1886764
-Node: Funding1887504
-Node: GNU Project1889993
-Node: Copying1890639
-Node: GNU Free Documentation License1928167
-Node: Contributors1953304
-Node: Option Index1990706
-Node: Keyword Index2180841
+Node: Alpha Built-in Functions1238779
+Node: ARM iWMMXt Built-in Functions1241788
+Node: ARM NEON Intrinsics1248768
+Node: AVR Built-in Functions1457187
+Node: Blackfin Built-in Functions1460257
+Node: FR-V Built-in Functions1460874
+Node: Argument Types1461733
+Node: Directly-mapped Integer Functions1463485
+Node: Directly-mapped Media Functions1464567
+Node: Raw read/write Functions1471599
+Node: Other Built-in Functions1472511
+Node: X86 Built-in Functions1473695
+Node: X86 transactional memory intrinsics1532663
+Node: MIPS DSP Built-in Functions1535337
+Node: MIPS Paired-Single Support1547845
+Node: MIPS Loongson Built-in Functions1549344
+Node: Paired-Single Arithmetic1555864
+Node: Paired-Single Built-in Functions1556812
+Node: MIPS-3D Built-in Functions1559479
+Node: Other MIPS Built-in Functions1564856
+Node: picoChip Built-in Functions1565380
+Node: PowerPC Built-in Functions1566729
+Node: PowerPC AltiVec/VSX Built-in Functions1568143
+Node: RX Built-in Functions1678130
+Node: S/390 System z Built-in Functions1682145
+Node: SH Built-in Functions1687402
+Node: SPARC VIS Built-in Functions1688795
+Node: SPU Built-in Functions1694399
+Node: TI C6X Built-in Functions1696215
+Node: TILE-Gx Built-in Functions1697239
+Node: TILEPro Built-in Functions1698356
+Node: Target Format Checks1699423
+Node: Solaris Format Checks1699855
+Node: Darwin Format Checks1700281
+Node: Pragmas1701099
+Node: ARM Pragmas1701809
+Node: M32C Pragmas1702412
+Node: MeP Pragmas1703486
+Node: RS/6000 and PowerPC Pragmas1705555
+Node: Darwin Pragmas1706296
+Node: Solaris Pragmas1707363
+Node: Symbol-Renaming Pragmas1708524
+Node: Structure-Packing Pragmas1710078
+Node: Weak Pragmas1711728
+Node: Diagnostic Pragmas1712462
+Node: Visibility Pragmas1715569
+Node: Push/Pop Macro Pragmas1716321
+Node: Function Specific Option Pragmas1717293
+Node: Unnamed Fields1719550
+Node: Thread-Local1721778
+Node: C99 Thread-Local Edits1723883
+Node: C++98 Thread-Local Edits1725895
+Node: Binary constants1729339
+Node: C++ Extensions1730010
+Node: C++ Volatiles1731721
+Node: Restricted Pointers1734069
+Node: Vague Linkage1735660
+Node: C++ Interface1739284
+Ref: C++ Interface-Footnote-11743570
+Node: Template Instantiation1743706
+Node: Bound member functions1750293
+Node: C++ Attributes1751825
+Node: Function Multiversioning1754481
+Node: Namespace Association1756296
+Node: Type Traits1757676
+Node: Java Exceptions1764164
+Node: Deprecated Features1765554
+Node: Backwards Compatibility1768519
+Node: Objective-C1769871
+Node: GNU Objective-C runtime API1770480
+Node: Modern GNU Objective-C runtime API1771487
+Node: Traditional GNU Objective-C runtime API1773924
+Node: Executing code before main1774652
+Node: What you can and what you cannot do in +load1777390
+Node: Type encoding1779780
+Node: Legacy type encoding1784856
+Node: @encode1785947
+Node: Method signatures1786488
+Node: Garbage Collection1788483
+Node: Constant string objects1791172
+Node: compatibility_alias1793680
+Node: Exceptions1794402
+Node: Synchronization1797113
+Node: Fast enumeration1798297
+Node: Using fast enumeration1798609
+Node: c99-like fast enumeration syntax1799820
+Node: Fast enumeration details1800523
+Node: Fast enumeration protocol1802864
+Node: Messaging with the GNU Objective-C runtime1806016
+Node: Dynamically registering methods1807387
+Node: Forwarding hook1809078
+Node: Compatibility1812118
+Node: Gcov1818685
+Node: Gcov Intro1819218
+Node: Invoking Gcov1821936
+Node: Gcov and Optimization1834847
+Node: Gcov Data Files1837847
+Node: Cross-profiling1839242
+Node: Trouble1841093
+Node: Actual Bugs1842505
+Node: Interoperation1842952
+Node: Incompatibilities1849844
+Node: Fixed Headers1857995
+Node: Standard Libraries1859658
+Node: Disappointments1861030
+Node: C++ Misunderstandings1865388
+Node: Static Definitions1866199
+Node: Name lookup1867252
+Ref: Name lookup-Footnote-11872030
+Node: Temporaries1872217
+Node: Copy Assignment1874193
+Node: Non-bugs1876000
+Node: Warnings and Errors1886507
+Node: Bugs1888269
+Node: Bug Criteria1888833
+Node: Bug Reporting1891043
+Node: Service1891264
+Node: Contributing1892083
+Node: Funding1892823
+Node: GNU Project1895312
+Node: Copying1895958
+Node: GNU Free Documentation License1933486
+Node: Contributors1958623
+Node: Option Index1996025
+Node: Keyword Index2186160
 
 End Tag Table
