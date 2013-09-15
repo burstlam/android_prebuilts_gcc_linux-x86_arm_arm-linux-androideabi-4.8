@@ -151,6 +151,9 @@ typedef bool (*printer_fn) (pretty_printer *, text_info *, const char *,
    output.  */
 #define pp_translate_identifiers(PP) pp_base (PP)->translate_identifiers
 
+/* True if colors should be shown.  */
+#define pp_show_color(PP) pp_base (PP)->show_color
+
 /* The data structure that contains the bare minimum required to do
    proper pretty-printing.  Clients may derived from this structure
    and add additional fields they need.  */
@@ -194,6 +197,9 @@ struct pretty_print_info
   /* Nonzero means identifiers are translated to the locale character
      set on output.  */
   bool translate_identifiers;
+
+  /* Nonzero means that text should be colorized.  */
+  bool show_color;
 };
 
 #define pp_set_line_maximum_length(PP, L) \
@@ -232,7 +238,7 @@ pp_base_get_prefix (const pretty_printer *pp) { return pp->prefix; }
 #define pp_left_brace(PP)       pp_character (PP, '{')
 #define pp_right_brace(PP)      pp_character (PP, '}')
 #define pp_semicolon(PP)        pp_character (PP, ';')
-#define pp_comma(PP)            pp_string (PP, ", ")
+#define pp_comma(PP)            pp_character (PP, ',')
 #define pp_dot(PP)              pp_character (PP, '.')
 #define pp_colon(PP)            pp_character (PP, ':')
 #define pp_colon_colon(PP)      pp_string (PP, "::")
@@ -254,6 +260,7 @@ pp_base_get_prefix (const pretty_printer *pp) { return pp->prefix; }
 #define pp_quote(PP)            pp_character (PP, '\'')
 #define pp_backquote(PP)        pp_character (PP, '`')
 #define pp_doublequote(PP)      pp_character (PP, '"')
+#define pp_underscore(PP)       pp_character (PP, '_')
 #define pp_newline_and_flush(PP)     \
   do {                               \
     pp_newline (PP);                 \
